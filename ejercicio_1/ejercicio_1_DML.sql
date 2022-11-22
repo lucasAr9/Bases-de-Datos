@@ -1,0 +1,1 @@
+SELECT * FROM Factura WHERE(idCliente_fk=2);
