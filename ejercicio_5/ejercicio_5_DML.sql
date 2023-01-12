@@ -70,29 +70,66 @@ EXCEPT (
 
 /*
 5. Reportar DNI, nombre, apellido, fnac y localidad donde viven podadores
-con apellido terminado con el string 'ata' y que el podador tenga al menos
-una poda durante 2018. Ordenar por apellido y nombre.
+con apellido terminado con el string 'ez' y que el podador tenga al menos
+una poda durante 2021. Ordenar por apellido y nombre.
 */
+SELECT DISTINCT p.DNI, p.nombre, p.apellido, p.fnac, l.nombreL
+FROM Podador p
+    INNER JOIN Localidad l ON (p.codigoPostalVive_fk = l.codigoPostal)
+    INNER JOIN Poda po ON (p.DNI = po.DNI_fk)
+WHERE (p.apellido LIKE '%ez') AND (p.DNI IN
+    (
+    SELECT DISTINCT po.DNI_fk
+    FROM Poda po
+    WHERE (po.fecha BETWEEN "2021-01-01" AND "2021-12-31")
+    )
+)
+ORDER BY p.apellido, p.nombre;
 
 
 /*
 6. Listar DNI, apellido, nombre, telefono y fecha de nacimiento
 de podadores que solo podaron arboles de especie 'Hge'.
 */
+SELECT p.DNI, p.apellido, p.nombre, p.telefono, p.fnac
+FROM Podador p
+    INNER JOIN Poda po ON (p.DNI = po.DNI_fk)
+    INNER JOIN Arbol a ON (po.nroArbol_fk = a.nroArbol)
+WHERE (a.especie = 'Hge')
+EXCEPT (
+    SELECT p.DNI, p.apellido, p.nombre, p.telefono, p.fnac
+    FROM Podador p
+        INNER JOIN Poda po ON (p.DNI = po.DNI_fk)
+        INNER JOIN Arbol a ON (po.nroArbol_fk = a.nroArbol)
+    WHERE NOT (a.especie = 'Hge')
+);
 
 
 /*
 7. Listar especie de arboles que se encuentren en la localidad
 de 'La Plata' y tambien en la localidad de 'Azul'.
 */
+(SELECT a.nroArbol, a.especie
+FROM Arbol a INNER JOIN Localidad l ON (a.codigoPostal_fk = l.codigoPostal)
+WHERE (l.nombreL = 'La Plata'))
+INTERSECT
+(SELECT a.nroArbol, a.especie
+FROM Arbol a INNER JOIN Localidad l ON (a.codigoPostal_fk = l.codigoPostal)
+WHERE (l.nombreL = 'Azul'));
 
 
 /*
 8. Eliminar el podador con DNI: 40123123.
 */
+DELETE FROM Poda po WHERE po.DNI_fk = 40123123;
+DELETE FROM Podador p WHERE p.DNI = 40123123;
 
 
 /*
-9. Reportar nombre, descripcion y cantidad de habitaciones de
-localidades que tengan menos de 100 arbol.
+9. Reportar nombre, descripcion y cantidad de habitantes de
+localidades que tengan menos de 10 arbol.
 */
+SELECT l.nombreL, l.descripcion, l.nroHabitantes
+FROM Localidad l LEFT JOIN Arbol a ON (l.codigoPostal = a.codigoPostal_fk)
+GROUP BY l.codigoPostal, l.nombreL, l.descripcion, l.nroHabitantes
+HAVING (COUNT(*) < 2);
